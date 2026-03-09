@@ -1,212 +1,238 @@
 # Kubernetes Production Starter Kit
 
-Production-ready Kubernetes baseline for monitoring, networking and operational best practices.
+A production-ready baseline for deploying observability and operational tooling in Kubernetes clusters.
 
-This project provides a **clean and practical starting point for running Kubernetes clusters in production environments**, including monitoring, dashboards and ingress configuration.
+This repository provides a structured starting point for organizations that want to quickly bootstrap a Kubernetes platform with monitoring, logging, and operational scripts using modern cloud-native tools.
 
-The goal is simple: **bootstrap a production-ready observability stack quickly and consistently**.
-
----
-
-# Features
-
-• Prometheus monitoring stack
-• Grafana dashboards for Kubernetes clusters
-• Alertmanager integration
-• Persistent storage for monitoring components
-• NGINX ingress configuration
-• Production-oriented resource limits
-• Automated installation script
-• Modular and extensible repository structure
+The goal is to provide **a clean, modular, and reproducible setup** that can be deployed across environments.
 
 ---
 
-# Architecture
+# Architecture Overview
 
-Monitoring stack based on:
-
-* Prometheus
-* Grafana
-* Alertmanager
-* Node Exporter
-* kube-state-metrics
-
-All deployed using Helm and the kube-prometheus-stack chart.
-
----
-
-# Project Structure
+This project organizes Kubernetes platform components into independent modules.
 
 ```
 kubernetes-production-starter-kit
 │
-├── configs
-│   └── kube-prometheus-stack-values.yaml
+├── configs/                 # Shared configuration files
 │
-├── monitoring
-│   └── grafana
-│       └── dashboards
-│           ├── cluster-health.json
-│           ├── control-plane.json
-│           ├── etcd-cluster.json
-│           ├── nodes-metrics.json
-│           └── pods-overview.json
+├── monitoring/              # Monitoring stack
+│   └── prometheus-values.yaml
 │
-├── networking
-│   └── monitoring-ingress.yaml
+├── logging/                 # Logging stack
+│   └── fluent-bit/
+│       ├── fluent-bit-values.yaml
+│       └── config/
+│           └── filters-audit.conf
 │
-├── scripts
-│   └── install-monitoring.sh
+├── networking/              # Ingress / networking configuration
 │
-├── docs
+├── scripts/                 # Installation scripts
+│   ├── install-monitoring.sh
+│   └── install-logging.sh
+│
+├── docs/                    # Additional documentation
 │
 └── README.md
 ```
 
----
-
-# Requirements
-
-Before using this starter kit you should have:
-
-* A running Kubernetes cluster
-* kubectl configured
-* NGINX Ingress Controller installed
-* Helm installed
+Each component can be installed independently.
 
 ---
 
-# Monitoring Installation
+# Observability Stack
 
-The monitoring stack is installed using Helm and the kube-prometheus-stack chart.
+The repository provides a baseline observability stack for Kubernetes environments.
 
-Add Helm repository:
+It includes:
 
-```bash
-helm repo add prometheus-community https://prometheus-community.github.io/helm-charts
-helm repo update
-```
-
-Install monitoring stack:
-
-```bash
-helm install monitoring prometheus-community/kube-prometheus-stack \
--n monitoring \
---create-namespace \
--f configs/kube-prometheus-stack-values.yaml
-```
-
-This will deploy:
+Monitoring
 
 * Prometheus
 * Grafana
-* Alertmanager
-* node-exporter
-* kube-state-metrics
+
+Logging
+
+* Fluent Bit
+* Elasticsearch
+* Kibana
 
 ---
 
-# Quick Installation
+# Monitoring Stack
 
-Monitoring stack can be installed automatically using the provided script.
+The monitoring stack provides metrics collection and visualization for Kubernetes clusters.
+
+Components:
+
+Prometheus
+Collects metrics from Kubernetes nodes, pods, and services.
+
+Grafana
+Provides dashboards for infrastructure and application metrics.
+
+Metrics sources include:
+
+* node exporter
+* kube-state-metrics
+* application exporters
+
+---
+
+## Install Monitoring
+
+Run the installation script:
 
 ```bash
 ./scripts/install-monitoring.sh
 ```
 
-This script will:
+This script deploys the monitoring stack using Helm.
 
-* Add Helm repositories
-* Create the monitoring namespace
-* Install kube-prometheus-stack
-* Deploy Prometheus, Grafana and Alertmanager
-* Apply the monitoring ingress configuration
+Default namespace used in this project:
+
+```
+monitoring
+```
 
 ---
 
-# Grafana Dashboards
+# Logging Stack
 
-Pre-built dashboards for Kubernetes monitoring are included.
+The logging stack collects Kubernetes audit logs and sends them to Elasticsearch for indexing and analysis.
 
-Location:
+Components:
 
-```
-monitoring/grafana/dashboards/
-```
+Fluent Bit
+Collects logs from Kubernetes nodes.
 
-Dashboards included:
+Elasticsearch
+Stores and indexes logs.
 
-* Cluster Health
-* Control Plane Metrics
-* ETCD Monitoring
-* Node Metrics
-* Pod Resource Usage
-
-These dashboards can be imported directly into Grafana.
+Kibana
+Provides a visualization interface to explore logs.
 
 ---
 
-# Ingress Configuration
+## Kubernetes Audit Logging
 
-Monitoring services can be exposed through NGINX Ingress.
+This project focuses on collecting **Kubernetes audit logs**, which are useful for:
 
-Example domains:
+* security investigations
+* operational troubleshooting
+* compliance auditing
 
-```
-grafana.k8s.local
-prometheus.k8s.local
-alertmanager.k8s.local
-```
+Audit logs must be enabled in the Kubernetes API server.
 
-Ingress configuration:
+Typical audit log path:
 
 ```
-networking/monitoring-ingress.yaml
+/var/log/kubernetes/audit/audit.log
 ```
 
-Apply ingress configuration:
+Fluent Bit reads logs from this location using a DaemonSet running on cluster nodes.
+
+---
+
+## Log Filtering
+
+The configuration includes filtering rules to reduce noise from common Kubernetes operations.
+
+Examples of filtered events:
+
+* list operations
+* watch operations
+* get requests
+* service account traffic
+* API discovery calls
+
+This ensures Elasticsearch stores **only relevant security and operational events**.
+
+Configuration file:
+
+```
+logging/fluent-bit/config/filters-audit.conf
+```
+
+---
+
+## Install Logging
+
+Run the installation script:
 
 ```bash
-kubectl apply -f networking/monitoring-ingress.yaml
+./scripts/install-logging.sh
+```
+
+This installs Fluent Bit as a DaemonSet across the cluster.
+
+Namespace used:
+
+```
+logging
 ```
 
 ---
 
-# Customization
+# Installation Requirements
 
-This project is designed to be **environment-agnostic**.
+Before deploying the platform components, ensure the following tools are available:
 
-Users should adapt:
+* Kubernetes cluster
+* Helm
+* kubectl
 
-* storage classes
-* domains
-* TLS configuration
-* resource limits
-* ingress configuration
+Optional but recommended:
 
-according to their infrastructure.
+* Elasticsearch cluster
+* Kibana instance
 
 ---
 
-# Roadmap
+# Repository Philosophy
 
-Upcoming modules planned for the starter kit:
+This repository follows a modular approach.
 
-* Kubernetes security baseline
-* Network policies
-* TLS automation with cert-manager
-* ETCD backup strategy
-* CI/CD templates
-* Kubernetes operational runbooks
+Each infrastructure capability is separated into its own directory:
+
+* monitoring
+* logging
+* networking
+* backup
+* security
+
+This allows organizations to adopt only the components they need.
+
+---
+
+# Future Modules
+
+Additional platform modules may include:
+
+* cluster backups
+* ingress controllers
+* security policies
+* centralized authentication
+
+Potential tools to integrate:
+
+* Velero
+* NGINX Ingress Controller
+
+---
+
+# Use Cases
+
+This project can be used for:
+
+* Kubernetes platform bootstrap
+* DevOps environments
+* production cluster observability
+* internal platform engineering teams
 
 ---
 
 # License
 
-MIT License
-
----
-
-# Author
-
-Kubernetes infrastructure and operations starter kit designed for production environments.
+This project is intended as a reusable baseline for Kubernetes platform deployments.

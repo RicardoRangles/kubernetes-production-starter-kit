@@ -1,39 +1,64 @@
 prometheus:
   prometheusSpec:
 
-    retention: 7d
+    retention: 15d
+
+    resources:
+      requests:
+        cpu: 300m
+        memory: 512Mi
+      limits:
+        cpu: 1000m
+        memory: 2Gi
 
     storageSpec:
       volumeClaimTemplate:
         spec:
-          accessModes: ["ReadWriteOnce"]
+          storageClassName: standard
+          accessModes:
+            - ReadWriteOnce
           resources:
             requests:
-              storage: 20Gi
-
-    resources:
-      requests:
-        memory: 400Mi
-        cpu: 200m
-      limits:
-        memory: 1Gi
-        cpu: 500m
+              storage: 30Gi
 
 alertmanager:
   alertmanagerSpec:
 
+    resources:
+      requests:
+        cpu: 100m
+        memory: 128Mi
+      limits:
+        cpu: 200m
+        memory: 256Mi
+
     storage:
       volumeClaimTemplate:
         spec:
-          accessModes: ["ReadWriteOnce"]
+          storageClassName: standard
+          accessModes:
+            - ReadWriteOnce
           resources:
             requests:
               storage: 5Gi
 
 grafana:
 
+  adminUser: admin
+  adminPassword: changeme123
+
+  service:
+    type: ClusterIP
+
+  resources:
+    requests:
+      cpu: 100m
+      memory: 128Mi
+    limits:
+      cpu: 300m
+      memory: 512Mi
+
   persistence:
     enabled: true
-    size: 5Gi
-
-  adminUser: admin
+    storageClassName: standard
+    size: 10Gi

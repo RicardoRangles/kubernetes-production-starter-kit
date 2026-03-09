@@ -1,8 +1,0 @@
-adminUser: admin
-
-service:
-  type: ClusterIP
-
-persistence:
-  enabled: true
-  size: 5Gi

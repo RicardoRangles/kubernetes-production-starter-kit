@@ -1,10 +1,10 @@
 # Kubernetes Production Starter Kit
 
-Production-ready Kubernetes baseline for monitoring, networking and operations.
+Production-ready Kubernetes baseline for monitoring, networking and operational best practices.
 
-This project provides a **ready-to-use foundation** for running Kubernetes clusters with essential production components such as monitoring, dashboards, ingress configuration and operational best practices.
+This project provides a **clean and practical starting point for running Kubernetes clusters in production environments**, including monitoring, dashboards and ingress configuration.
 
-The goal is simple: **save hours of setup and provide a clean, production-oriented starting point**.
+The goal is simple: **bootstrap a production-ready observability stack quickly and consistently**.
 
 ---
 
@@ -12,31 +12,26 @@ The goal is simple: **save hours of setup and provide a clean, production-orient
 
 • Prometheus monitoring stack
 • Grafana dashboards for Kubernetes clusters
-• Alertmanager configuration
+• Alertmanager integration
 • Persistent storage for monitoring components
-• NGINX Ingress configuration
+• NGINX ingress configuration
 • Production-oriented resource limits
-• Modular folder structure for easy customization
+• Automated installation script
+• Modular and extensible repository structure
 
 ---
 
-# Architecture Overview
+# Architecture
 
-Monitoring stack included:
+Monitoring stack based on:
 
 * Prometheus
 * Grafana
 * Alertmanager
+* Node Exporter
+* kube-state-metrics
 
-Dashboards included:
-
-* Cluster Health
-* Control Plane Metrics
-* ETCD Monitoring
-* Node Metrics
-* Pod Resource Usage
-
-These dashboards provide visibility into **cluster health, workloads and infrastructure metrics**.
+All deployed using Helm and the kube-prometheus-stack chart.
 
 ---
 
@@ -46,8 +41,7 @@ These dashboards provide visibility into **cluster health, workloads and infrast
 kubernetes-production-starter-kit
 │
 ├── configs
-│   ├── prometheus-values.yaml
-│   └── grafana-values.yaml
+│   └── kube-prometheus-stack-values.yaml
 │
 ├── monitoring
 │   └── grafana
@@ -61,7 +55,12 @@ kubernetes-production-starter-kit
 ├── networking
 │   └── monitoring-ingress.yaml
 │
-└── docs
+├── scripts
+│   └── install-monitoring.sh
+│
+├── docs
+│
+└── README.md
 ```
 
 ---
@@ -73,33 +72,75 @@ Before using this starter kit you should have:
 * A running Kubernetes cluster
 * kubectl configured
 * NGINX Ingress Controller installed
-* Prometheus stack installed
-* Grafana installed
-
-This repository **does not install the cluster itself**, it provides production-ready configuration for it.
+* Helm installed
 
 ---
 
-# Monitoring Configuration
+# Monitoring Installation
 
-Prometheus configuration includes:
+The monitoring stack is installed using Helm and the kube-prometheus-stack chart.
 
-* Persistent storage
-* Resource limits
-* Metric retention
-* Alertmanager integration
+Add Helm repository:
 
-Grafana configuration includes:
+```bash
+helm repo add prometheus-community https://prometheus-community.github.io/helm-charts
+helm repo update
+```
 
-* Persistent storage
-* Admin configuration
-* Resource limits
+Install monitoring stack:
 
-All dashboards are stored in:
+```bash
+helm install monitoring prometheus-community/kube-prometheus-stack \
+-n monitoring \
+--create-namespace \
+-f configs/kube-prometheus-stack-values.yaml
+```
+
+This will deploy:
+
+* Prometheus
+* Grafana
+* Alertmanager
+* node-exporter
+* kube-state-metrics
+
+---
+
+# Quick Installation
+
+Monitoring stack can be installed automatically using the provided script.
+
+```bash
+./scripts/install-monitoring.sh
+```
+
+This script will:
+
+* Add Helm repositories
+* Create the monitoring namespace
+* Install kube-prometheus-stack
+* Deploy Prometheus, Grafana and Alertmanager
+* Apply the monitoring ingress configuration
+
+---
+
+# Grafana Dashboards
+
+Pre-built dashboards for Kubernetes monitoring are included.
+
+Location:
 
 ```
 monitoring/grafana/dashboards/
 ```
+
+Dashboards included:
+
+* Cluster Health
+* Control Plane Metrics
+* ETCD Monitoring
+* Node Metrics
+* Pod Resource Usage
 
 These dashboards can be imported directly into Grafana.
 
@@ -117,49 +158,31 @@ prometheus.k8s.local
 alertmanager.k8s.local
 ```
 
-Ingress configuration is located in:
+Ingress configuration:
 
 ```
 networking/monitoring-ingress.yaml
 ```
 
----
+Apply ingress configuration:
 
-# Usage
-
-Clone the repository:
-
-```
-git clone https://github.com/YOUR_USER/kubernetes-production-starter-kit.git
-cd kubernetes-production-starter-kit
-```
-
-Apply configurations according to your environment.
-
-Example:
-
-```
+```bash
 kubectl apply -f networking/monitoring-ingress.yaml
-```
-
-Import Grafana dashboards from:
-
-```
-monitoring/grafana/dashboards/
 ```
 
 ---
 
 # Customization
 
-This starter kit is designed to be **environment-agnostic**.
+This project is designed to be **environment-agnostic**.
 
 Users should adapt:
 
-* Storage classes
-* Domains
+* storage classes
+* domains
 * TLS configuration
-* Resource limits
+* resource limits
+* ingress configuration
 
 according to their infrastructure.
 
@@ -167,9 +190,9 @@ according to their infrastructure.
 
 # Roadmap
 
-Future modules planned:
+Upcoming modules planned for the starter kit:
 
-* Security baseline
+* Kubernetes security baseline
 * Network policies
 * TLS automation with cert-manager
 * ETCD backup strategy
@@ -186,4 +209,4 @@ MIT License
 
 # Author
 
-Infrastructure & Kubernetes operations toolkit designed for production environments.
+Kubernetes infrastructure and operations starter kit designed for production environments.

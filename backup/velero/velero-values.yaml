@@ -1,0 +1,33 @@
+credentials:
+  existingSecret: cloud-credentials
+
+initContainers:
+  - name: velero-plugin-for-aws
+    image: velero/velero-plugin-for-aws:v1.13.0
+    volumeMounts:
+      - mountPath: /target
+        name: plugins
+
+configuration:
+  backupStorageLocation:
+    - name: default
+      provider: aws
+      bucket: dev-cluster
+      config:
+        region: us-east-1
+        s3Url: http://minio.velero.cluster.local:9000
+        s3ForcePathStyle: true
+        signatureVersion: v4
+
+  volumeSnapshotLocation:
+    - name: default
+      provider: aws
+      config:
+        region: us-east-1
+
+deployNodeAgent: true
+
+resources: {}
+
+nodeSelector:
+  role: infra

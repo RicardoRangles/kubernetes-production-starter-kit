@@ -12,7 +12,7 @@ echo "Checking kubectl..."
 if ! command -v kubectl &> /dev/null
 then
     echo "kubectl not installed"
-    exit
+    exit 1
 fi
 
 echo "Checking Helm..."
@@ -20,7 +20,7 @@ echo "Checking Helm..."
 if ! command -v helm &> /dev/null
 then
     echo "helm not installed"
-    exit
+    exit 1
 fi
 
 echo "Adding Helm repositories..."
@@ -30,6 +30,7 @@ helm repo add grafana https://grafana.github.io/helm-charts
 helm repo add jetstack https://charts.jetstack.io
 helm repo add ingress-nginx https://kubernetes.github.io/ingress-nginx
 helm repo add vmware-tanzu https://vmware-tanzu.github.io/helm-charts
+helm repo add fluent https://fluent.github.io/helm-charts
 
 helm repo update
 
@@ -55,7 +56,7 @@ kubectl create namespace monitoring --dry-run=client -o yaml | kubectl apply -f 
 helm install monitoring prometheus-community/kube-prometheus-stack \
 --namespace monitoring
 
-echo "Installing logging..."
+echo "Installing logging stack..."
 
 kubectl create namespace logging --dry-run=client -o yaml | kubectl apply -f -
 
@@ -67,7 +68,11 @@ echo "Installing Velero backup system..."
 kubectl create namespace velero --dry-run=client -o yaml | kubectl apply -f -
 
 helm install velero vmware-tanzu/velero \
---namespace velero
+--namespace velero \
+--set configuration.provider=aws \
+--set configuration.backupStorageLocation.bucket=velero-backups \
+--set configuration.backupStorageLocation.config.region=minio \
+--set configuration.volumeSnapshotLocation.config.region=minio
 
 echo "===================================="
 echo "Deployment completed successfully"
